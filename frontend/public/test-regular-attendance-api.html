@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regular Attendance API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .info { color: #3b82f6; font-weight: bold; }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .test-result.success { background-color: #f0fdf4; border-color: #10b981; }
+        .test-result.error { background-color: #fef2f2; border-color: #ef4444; }
+        .test-result.info { background-color: #eff6ff; border-color: #3b82f6; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .login-form {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .login-form input {
+            width: 200px;
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Regular Attendance API Test</h1>
+    
+    <div class="test-container">
+        <h2>Authentication</h2>
+        <div class="login-form">
+            <div>
+                <label>Email: </label>
+                <input type="email" id="email" value="cs.student1@college.edu" placeholder="Email">
+            </div>
+            <div>
+                <label>Password: </label>
+                <input type="password" id="password" value="password123" placeholder="Password">
+            </div>
+            <button onclick="login()">Login</button>
+            <button onclick="checkAuth()">Check Auth Status</button>
+        </div>
+        <div id="auth-results"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Regular Attendance API Tests</h2>
+        <button onclick="testDepartmentAttendance()">Test Department Attendance (CS)</button>
+        <button onclick="testAllStudentsAttendance()">Test All Students Attendance</button>
+        <button onclick="testAcademicHealth()">Test Academic Health</button>
+        <div id="api-results"></div>
+    </div>
+
+    <script>
+        const authResults = document.getElementById('auth-results');
+        const apiResults = document.getElementById('api-results');
+
+        function addResult(container, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            addResult(authResults, 'Attempting login...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(authResults, `✅ Login Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                    // Store token if provided
+                    if (data.data?.token) {
+                        localStorage.setItem('token', data.data.token);
+                    }
+                } else {
+                    addResult(authResults, `❌ Login Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(authResults, `❌ Login Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkAuth() {
+            addResult(authResults, 'Checking authentication...', 'info');
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(authResults, `✅ Auth Check Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(authResults, `❌ Auth Check Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(authResults, `❌ Auth Check Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDepartmentAttendance() {
+            addResult(apiResults, 'Testing department attendance (CS)...', 'info');
+            try {
+                const response = await fetch('/api/academic/department/attendance?department=CS&academicYear=1');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(apiResults, `✅ Department Attendance Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ Department Attendance Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ Department Attendance Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAllStudentsAttendance() {
+            addResult(apiResults, 'Testing all students attendance...', 'info');
+            try {
+                const response = await fetch('/api/academic/all-students/attendance?academicYear=1');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(apiResults, `✅ All Students Attendance Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ All Students Attendance Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ All Students Attendance Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAcademicHealth() {
+            addResult(apiResults, 'Testing academic service health...', 'info');
+            try {
+                const response = await fetch('/api/academic/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(apiResults, `✅ Academic Health Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ Academic Health Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ Academic Health Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run health check on load
+        window.onload = () => {
+            testAcademicHealth();
+            checkAuth();
+        };
+    </script>
+</body>
+</html>

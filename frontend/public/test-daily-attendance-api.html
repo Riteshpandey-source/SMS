@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Attendance API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .info { color: #3b82f6; font-weight: bold; }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .test-result.success { background-color: #f0fdf4; border-color: #10b981; }
+        .test-result.error { background-color: #fef2f2; border-color: #ef4444; }
+        .test-result.info { background-color: #eff6ff; border-color: #3b82f6; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>Daily Attendance API Test</h1>
+    
+    <div class="test-container">
+        <h2>API Endpoint Tests</h2>
+        <button onclick="testHealthCheck()">Test Health Check</button>
+        <button onclick="testStudentAttendance()">Test Student Attendance</button>
+        <button onclick="testFacultySessions()">Test Faculty Sessions</button>
+        <div id="api-results"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Authentication Test</h2>
+        <button onclick="testAuth()">Check Auth Status</button>
+        <div id="auth-results"></div>
+    </div>
+
+    <script>
+        const apiResults = document.getElementById('api-results');
+        const authResults = document.getElementById('auth-results');
+
+        function addResult(container, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+
+        async function testHealthCheck() {
+            addResult(apiResults, 'Testing health check...', 'info');
+            try {
+                const response = await fetch('/api/daily-attendance/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(apiResults, `✅ Health Check Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ Health Check Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ Health Check Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAuth() {
+            addResult(authResults, 'Testing authentication...', 'info');
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(authResults, `✅ Auth Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(authResults, `❌ Auth Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(authResults, `❌ Auth Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testStudentAttendance() {
+            addResult(apiResults, 'Testing student attendance...', 'info');
+            
+            // First get current user
+            try {
+                const authResponse = await fetch('/api/auth/me');
+                if (!authResponse.ok) {
+                    addResult(apiResults, '❌ Need to login first', 'error');
+                    return;
+                }
+                
+                const userData = await authResponse.json();
+                const studentId = userData.data.user._id;
+                
+                addResult(apiResults, `Using student ID: ${studentId}`, 'info');
+                
+                // Test student attendance endpoint
+                const response = await fetch(`/api/daily-attendance/student/${studentId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(apiResults, `✅ Student Attendance Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ Student Attendance Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ Student Attendance Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFacultySessions() {
+            addResult(apiResults, 'Testing faculty sessions...', 'info');
+            try {
+                const response = await fetch('/api/daily-attendance/faculty/sessions');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(apiResults, `✅ Faculty Sessions Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ Faculty Sessions Failed: ${response.status} - ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ Faculty Sessions Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run health check on load
+        window.onload = () => {
+            testHealthCheck();
+            testAuth();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Regular Attendance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .step {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .info { color: #3b82f6; font-weight: bold; }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result.success { background-color: #f0fdf4; border-color: #10b981; }
+        .result.error { background-color: #fef2f2; border-color: #ef4444; }
+        .result.info { background-color: #eff6ff; border-color: #3b82f6; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        input {
+            width: 200px;
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.logged-out { background: #fef2f2; border: 1px solid #ef4444; }
+        .status.logged-in { background: #f0fdf4; border: 1px solid #10b981; }
+    </style>
+</head>
+<body>
+    <h1>Debug Regular Attendance Issue</h1>
+    
+    <div class="step">
+        <h2>Current Status</h2>
+        <div id="current-status" class="status logged-out">Not logged in</div>
+    </div>
+
+    <div class="step">
+        <h2>Step 1: Login</h2>
+        <div>
+            <input type="email" id="email" value="cs.student1@college.edu" placeholder="Email">
+            <input type="password" id="password" value="password123" placeholder="Password">
+            <button onclick="login()" id="login-btn">Login</button>
+        </div>
+        <div id="login-results"></div>
+    </div>
+
+    <div class="step">
+        <h2>Step 2: Test API Endpoints</h2>
+        <button onclick="testHealthCheck()" id="health-btn">Test Health Check</button>
+        <button onclick="testDepartmentAttendance()" id="dept-btn" disabled>Test Department Attendance</button>
+        <button onclick="testAllStudentsAttendance()" id="all-btn" disabled>Test All Students</button>
+        <div id="api-results"></div>
+    </div>
+
+    <div class="step">
+        <h2>Step 3: Debug Frontend Component</h2>
+        <button onclick="testFrontendService()" id="frontend-btn" disabled>Test Frontend Service</button>
+        <div id="frontend-results"></div>
+    </div>
+
+    <script>
+        let isLoggedIn = false;
+        let currentUser = null;
+
+        const statusDiv = document.getElementById('current-status');
+        const loginResults = document.getElementById('login-results');
+        const apiResults = document.getElementById('api-results');
+        const frontendResults = document.getElementById('frontend-results');
+
+        function addResult(container, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+
+        function updateStatus(message, loggedIn = false) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${loggedIn ? 'logged-in' : 'logged-out'}`;
+            isLoggedIn = loggedIn;
+            
+            // Enable/disable buttons based on login status
+            document.getElementById('dept-btn').disabled = !loggedIn;
+            document.getElementById('all-btn').disabled = !loggedIn;
+            document.getElementById('frontend-btn').disabled = !loggedIn;
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('login-btn');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            
+            addResult(loginResults, 'Attempting login...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentUser = data.data.user;
+                    addResult(loginResults, `✅ Login Success!\nUser: ${currentUser.name}\nDepartment: ${currentUser.department}\nRole: ${currentUser.role}\nAcademic Year: ${currentUser.academicYear}`, 'success');
+                    
+                    updateStatus(`Logged in as ${currentUser.name} (${currentUser.department})`, true);
+                    
+                    // Store token if provided
+                    if (data.data?.token) {
+                        localStorage.setItem('token', data.data.token);
+                    }
+                } else {
+                    addResult(loginResults, `❌ Login Failed: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                    updateStatus('Login failed', false);
+                }
+            } catch (error) {
+                addResult(loginResults, `❌ Login Error: ${error.message}`, 'error');
+                updateStatus('Login error', false);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        }
+
+        async function testHealthCheck() {
+            addResult(apiResults, 'Testing health check...', 'info');
+            try {
+                const response = await fetch('/api/academic/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(apiResults, `✅ Health Check Success:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ Health Check Failed: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ Health Check Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDepartmentAttendance() {
+            if (!currentUser) {
+                addResult(apiResults, '❌ Please login first', 'error');
+                return;
+            }
+
+            addResult(apiResults, `Testing department attendance for ${currentUser.department}...`, 'info');
+            try {
+                const url = `/api/academic/department/attendance?department=${currentUser.department}&academicYear=${currentUser.academicYear || 1}`;
+                addResult(apiResults, `Making request to: ${url}`, 'info');
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const students = data.data?.students || [];
+                    addResult(apiResults, `✅ Department Attendance Success!\nStudents found: ${students.length}\nDepartment: ${data.data.department}\nAcademic Year: ${data.data.academicYear}`, 'success');
+                    
+                    if (students.length > 0) {
+                        const firstStudent = students[0];
+                        addResult(apiResults, `Sample student:\nName: ${firstStudent.name}\nDepartment: ${firstStudent.department}\nAttendance records: ${firstStudent.attendance?.length || 0}`, 'info');
+                        
+                        if (firstStudent.attendance && firstStudent.attendance.length > 0) {
+                            const firstAttendance = firstStudent.attendance[0];
+                            addResult(apiResults, `Sample attendance:\nSubject: ${firstAttendance.subjectCode}\nAttended: ${firstAttendance.attendedClasses}\nTotal: ${firstAttendance.totalClasses}\nPercentage: ${firstAttendance.percentage}%`, 'info');
+                        }
+                    }
+                } else {
+                    addResult(apiResults, `❌ Department Attendance Failed: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ Department Attendance Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAllStudentsAttendance() {
+            if (!currentUser) {
+                addResult(apiResults, '❌ Please login first', 'error');
+                return;
+            }
+
+            addResult(apiResults, 'Testing all students attendance...', 'info');
+            try {
+                const url = `/api/academic/all-students/attendance?academicYear=${currentUser.academicYear || 1}`;
+                addResult(apiResults, `Making request to: ${url}`, 'info');
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const students = data.data?.students || [];
+                    addResult(apiResults, `✅ All Students Attendance Success!\nTotal students: ${students.length}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ All Students Attendance Failed: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ All Students Attendance Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFrontendService() {
+            if (!currentUser) {
+                addResult(frontendResults, '❌ Please login first', 'error');
+                return;
+            }
+
+            addResult(frontendResults, 'Testing frontend service methods...', 'info');
+            
+            // Simulate the frontend service calls
+            try {
+                // Test department attendance service call
+                addResult(frontendResults, 'Testing academicService.getDepartmentAttendance...', 'info');
+                
+                const deptResponse = await fetch(`/api/academic/department/attendance?department=${currentUser.department}&academicYear=${currentUser.academicYear || 1}&semester=current`);
+                const deptData = await deptResponse.json();
+                
+                if (deptResponse.ok) {
+                    addResult(frontendResults, `✅ Frontend Service Test Success!\nStudents: ${deptData.data?.students?.length || 0}`, 'success');
+                    
+                    // Test the exact data structure that the component expects
+                    const students = deptData.data?.students || [];
+                    if (students.length > 0) {
+                        addResult(frontendResults, `Data structure check:\n- Students array: ✅\n- First student name: ${students[0].name}\n- First student attendance: ${students[0].attendance?.length || 0} records`, 'info');
+                    } else {
+                        addResult(frontendResults, '⚠️ No students found in response', 'error');
+                    }
+                } else {
+                    addResult(frontendResults, `❌ Frontend Service Test Failed: ${deptResponse.status}\n${JSON.stringify(deptData, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(frontendResults, `❌ Frontend Service Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check status on load
+        window.onload = async () => {
+            updateStatus('Checking login status...', false);
+            
+            try {
+                const response = await fetch('/api/auth/me');
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.data.user;
+                    updateStatus(`Already logged in as ${currentUser.name} (${currentUser.department})`, true);
+                } else {
+                    updateStatus('Not logged in', false);
+                }
+            } catch (error) {
+                updateStatus('Not logged in', false);
+            }
+            
+            // Auto-run health check
+            testHealthCheck();
+        };
+    </script>
+</body>
+</html>

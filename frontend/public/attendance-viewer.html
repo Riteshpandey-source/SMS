@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Attendance Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        .card p {
+            color: #666;
+            line-height: 1.6;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .card-features {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .card-features li {
+            padding: 8px 0;
+            color: #555;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-features li:before {
+            content: "✓";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Attendance Viewer</h1>
+            <p>View attendance records without logging in</p>
+        </div>
+
+        <div class="cards">
+            <!-- Daily Attendance Card -->
+            <a href="/public-attendance" class="card">
+                <div class="card-icon">📅</div>
+                <h2>Daily Attendance</h2>
+                <p>View day-by-day attendance records marked by faculty</p>
+                <ul class="card-features">
+                    <li>Session-wise attendance</li>
+                    <li>Subject-wise breakdown</li>
+                    <li>Date and time details</li>
+                    <li>Faculty information</li>
+                </ul>
+                <div style="text-align: center;">
+                    <span class="badge">Session Based</span>
+                </div>
+            </a>
+
+            <!-- Regular Attendance Card -->
+            <a href="/public-regular-attendance" class="card">
+                <div class="card-icon">📈</div>
+                <h2>Regular Attendance</h2>
+                <p>View cumulative attendance statistics and percentages</p>
+                <ul class="card-features">
+                    <li>Overall attendance percentage</li>
+                    <li>Subject-wise statistics</li>
+                    <li>Debarment status</li>
+                    <li>All students view</li>
+                </ul>
+                <div style="text-align: center;">
+                    <span class="badge">Statistics Based</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        .info { color: #3b82f6; font-weight: bold; }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .test-result.success { background-color: #f0fdf4; border-color: #10b981; }
+        .test-result.error { background-color: #fef2f2; border-color: #ef4444; }
+        .test-result.info { background-color: #eff6ff; border-color: #3b82f6; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        input {
+            width: 200px;
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Student Login & Regular Attendance Test</h1>
+    
+    <div class="test-container">
+        <h2>Step 1: Login</h2>
+        <div>
+            <label>Email: </label>
+            <input type="email" id="email" value="cs.student1@college.edu">
+        </div>
+        <div>
+            <label>Password: </label>
+            <input type="password" id="password" value="password123">
+        </div>
+        <button onclick="login()">Login</button>
+        <div id="login-results"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Step 2: Test Regular Attendance API</h2>
+        <button onclick="testDepartmentAttendance()">Test Department Attendance</button>
+        <button onclick="testAllStudentsAttendance()">Test All Students</button>
+        <div id="api-results"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Step 3: Check User Info</h2>
+        <button onclick="checkUserInfo()">Get User Info</button>
+        <div id="user-results"></div>
+    </div>
+
+    <script>
+        const loginResults = document.getElementById('login-results');
+        const apiResults = document.getElementById('api-results');
+        const userResults = document.getElementById('user-results');
+
+        function addResult(container, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            addResult(loginResults, 'Attempting login...', 'info');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(loginResults, `✅ Login Success!\nUser: ${data.data.user.name}\nDepartment: ${data.data.user.department}\nRole: ${data.data.user.role}`, 'success');
+                    
+                    // Store token if provided
+                    if (data.data?.token) {
+                        localStorage.setItem('token', data.data.token);
+                        addResult(loginResults, '✅ Token stored in localStorage', 'success');
+                    }
+                } else {
+                    addResult(loginResults, `❌ Login Failed: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(loginResults, `❌ Login Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkUserInfo() {
+            addResult(userResults, 'Checking user info...', 'info');
+            try {
+                const response = await fetch('/api/auth/me');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addResult(userResults, `✅ User Info:\n${JSON.stringify(data.data.user, null, 2)}`, 'success');
+                } else {
+                    addResult(userResults, `❌ User Info Failed: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(userResults, `❌ User Info Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDepartmentAttendance() {
+            addResult(apiResults, 'Testing department attendance...', 'info');
+            try {
+                const response = await fetch('/api/academic/department/attendance?department=CS&academicYear=1');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const students = data.data?.students || [];
+                    addResult(apiResults, `✅ Department Attendance Success!\nStudents found: ${students.length}\nFirst student: ${students[0]?.name || 'None'}`, 'success');
+                    
+                    if (students.length > 0) {
+                        const firstStudent = students[0];
+                        addResult(apiResults, `Sample student data:\nName: ${firstStudent.name}\nDepartment: ${firstStudent.department}\nAttendance records: ${firstStudent.attendance?.length || 0}`, 'info');
+                    }
+                } else {
+                    addResult(apiResults, `❌ Department Attendance Failed: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ Department Attendance Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAllStudentsAttendance() {
+            addResult(apiResults, 'Testing all students attendance...', 'info');
+            try {
+                const response = await fetch('/api/academic/all-students/attendance?academicYear=1');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const students = data.data?.students || [];
+                    addResult(apiResults, `✅ All Students Attendance Success!\nTotal students: ${students.length}`, 'success');
+                } else {
+                    addResult(apiResults, `❌ All Students Attendance Failed: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                addResult(apiResults, `❌ All Students Attendance Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check user info on load
+        window.onload = () => {
+            checkUserInfo();
+        };
+    </script>
+</body>
+</html>

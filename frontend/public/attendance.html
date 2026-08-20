@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Attendance Viewer - CampusBuddy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 60px 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 30px;
+      font-size: 40px;
+    }
+
+    h1 {
+      color: #1a202c;
+      font-size: 32px;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    p {
+      color: #718096;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .features {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      text-align: left;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      color: #4a5568;
+      font-size: 14px;
+    }
+
+    .feature:last-child {
+      margin-bottom: 0;
+    }
+
+    .feature::before {
+      content: "✓";
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      background: #48bb78;
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 24px;
+      margin-right: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 16px 40px;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .footer {
+      margin-top: 30px;
+      color: #a0aec0;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 40px 30px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .icon {
+        width: 60px;
+        height: 60px;
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🎓</div>
+    <h1>Public Attendance Viewer</h1>
+    <p>View your daily attendance without logging in. No password required!</p>
+    
+    <div class="features">
+      <div class="feature">Select your department and year</div>
+      <div class="feature">Choose your name from the list</div>
+      <div class="feature">View your complete attendance records</div>
+      <div class="feature">Filter by month, year, and subject</div>
+      <div class="feature">See attendance percentage instantly</div>
+    </div>
+
+    <a href="/public-attendance" class="btn">
+      View My Attendance
+    </a>
+
+    <div class="footer">
+      CampusBuddy © 2026 - Student Management System
+    </div>
+  </div>
+
+  <script>
+    // Redirect to public attendance viewer
+    document.querySelector('.btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      window.location.href = '/public-attendance';
+    });
+  </script>
+</body>
+</html>

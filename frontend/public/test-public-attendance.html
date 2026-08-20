@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Public Attendance API</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+    select, button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 5px;
+      border-left: 4px solid #4CAF50;
+    }
+    .error {
+      border-left-color: #f44336;
+      background: #ffebee;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    .loading {
+      text-align: center;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Test Public Attendance API</h1>
+    
+    <div class="form-group">
+      <label>Department:</label>
+      <select id="department">
+        <option value="">Select Department</option>
+        <option value="CS">CS - Computer Science</option>
+        <option value="ECE">ECE - Electronics & Communication</option>
+        <option value="ME">ME - Mechanical Engineering</option>
+        <option value="EE">EE - Electrical Engineering</option>
+        <option value="IT">IT - Information Technology</option>
+        <option value="CSAI">CSAI - Computer Science & AI</option>
+        <option value="AIDS">AIDS - AI & Data Science</option>
+        <option value="CIVIL">CIVIL - Civil Engineering</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Academic Year:</label>
+      <select id="year">
+        <option value="">Select Year</option>
+        <option value="1">Year 1</option>
+        <option value="2">Year 2</option>
+        <option value="3">Year 3</option>
+        <option value="4">Year 4</option>
+      </select>
+    </div>
+
+    <button id="testBtn" onclick="testAPI()">Test API</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function testAPI() {
+      const department = document.getElementById('department').value;
+      const year = document.getElementById('year').value;
+      const resultDiv = document.getElementById('result');
+      const testBtn = document.getElementById('testBtn');
+
+      if (!department || !year) {
+        resultDiv.innerHTML = '<div class="result error">Please select both department and year!</div>';
+        return;
+      }
+
+      testBtn.disabled = true;
+      resultDiv.innerHTML = '<div class="result loading">Loading... Please wait...</div>';
+
+      try {
+        // Build URL
+        const baseURL = 'http://localhost:5000/api';
+        const params = new URLSearchParams({
+          department: department,
+          academicYear: year,
+          startDate: '2026-01-01',
+          endDate: '2026-12-31'
+        });
+        
+        const url = `${baseURL}/daily-attendance/public/department?${params}`;
+        
+        console.log('🔍 Testing URL:', url);
+
+        // Make request
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('📊 Response status:', response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Response data:', data);
+
+        // Extract students
+        const sessions = data.data?.attendanceRecords || [];
+        const studentsMap = new Map();
+        
+        sessions.forEach(session => {
+          session.studentAttendance?.forEach(att => {
+            if (!studentsMap.has(att.studentName)) {
+              studentsMap.set(att.studentName, {
+                name: att.studentName,
+                email: att.studentEmail,
+                rollNumber: att.rollNumber
+              });
+            }
+          });
+        });
+
+        const students = Array.from(studentsMap.values());
+
+        // Display result
+        let html = '<div class="result">';
+        html += '<h3>✅ API Test Successful!</h3>';
+        html += `<p><strong>Department:</strong> ${department}</p>`;
+        html += `<p><strong>Academic Year:</strong> ${year}</p>`;
+        html += `<p><strong>Total Sessions:</strong> ${sessions.length}</p>`;
+        html += `<p><strong>Total Students:</strong> ${students.length}</p>`;
+        
+        if (students.length > 0) {
+          html += '<h4>Students Found:</h4><ul>';
+          students.forEach(student => {
+            html += `<li>${student.name} (${student.email})</li>`;
+          });
+          html += '</ul>';
+        } else {
+          html += '<p style="color: orange;">⚠️ No students found for this department and year.</p>';
+        }
+
+        html += '<h4>Raw Response:</h4>';
+        html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        html += '</div>';
+
+        resultDiv.innerHTML = html;
+
+      } catch (error) {
+        console.error('❌ Error:', error);
+        resultDiv.innerHTML = `
+          <div class="result error">
+            <h3>❌ API Test Failed!</h3>
+            <p><strong>Error:</strong> ${error.message}</p>
+            <p><strong>Possible Issues:</strong></p>
+            <ul>
+              <li>Backend server not running (check http://localhost:5000)</li>
+              <li>Public route not configured</li>
+              <li>CORS issue</li>
+              <li>No data in database</li>
+            </ul>
+            <p><strong>Check browser console for more details.</strong></p>
+          </div>
+        `;
+      } finally {
+        testBtn.disabled = false;
+      }
+    }
+
+    // Auto-select CS and Year 3 for quick testing
+    window.onload = function() {
+      document.getElementById('department').value = 'CS';
+      document.getElementById('year').value = '3';
+    };
+  </script>
+</body>
+</html>

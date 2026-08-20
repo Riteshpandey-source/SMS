@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Academic Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left-color: #f44336;
+            background: #ffebee;
+        }
+        .success {
+            border-left-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        pre {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-200 { background: #4CAF50; color: white; }
+        .status-404 { background: #FF9800; color: white; }
+        .status-500 { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Academic Data Test Page</h1>
+        
+        <div class="section">
+            <h2>Step 1: Login Status</h2>
+            <button onclick="checkLogin()">Check Login</button>
+            <div id="loginStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 2: Test API Endpoints</h2>
+            <button onclick="testMarksAPI()">Test Marks API</button>
+            <button onclick="testAttendanceAPI()">Test Attendance API</button>
+            <button onclick="testDebarmentAPI()">Test Debarment API</button>
+            <button onclick="testAllAPIs()">Test All APIs</button>
+            <div id="apiResults"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 3: Database Check</h2>
+            <button onclick="checkDatabase()">Check Database Records</button>
+            <div id="dbResults"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        function checkLogin() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+            
+            const html = `
+                <div class="section ${user._id ? 'success' : 'error'}">
+                    <h3>${user._id ? '✅ Logged In' : '❌ Not Logged In'}</h3>
+                    <pre>${JSON.stringify({
+                        id: user._id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        department: user.department,
+                        academicYear: user.academicYear,
+                        hasToken: !!token
+                    }, null, 2)}</pre>
+                </div>
+            `;
+            document.getElementById('loginStatus').innerHTML = html;
+        }
+
+        async function testMarksAPI() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+            
+            if (!user._id || !token) {
+                alert('Please login first!');
+                return;
+            }
+
+            const url = `${API_BASE}/academic/midterm/${user._id}?academicYear=${user.academicYear}`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                const html = `
+                    <div class="section ${response.ok ? 'success' : 'error'}">
+                        <h3>Marks API <span class="status status-${response.status}">${response.status}</span></h3>
+                        <p><strong>URL:</strong> ${url}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                document.getElementById('apiResults').innerHTML = html;
+            } catch (error) {
+                document.getElementById('apiResults').innerHTML = `
+                    <div class="section error">
+                        <h3>❌ Marks API Error</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAttendanceAPI() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+            
+            if (!user._id || !token) {
+                alert('Please login first!');
+                return;
+            }
+
+            const url = `${API_BASE}/academic/attendance/${user._id}?academicYear=${user.academicYear}`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                const html = `
+                    <div class="section ${response.ok ? 'success' : 'error'}">
+                        <h3>Attendance API <span class="status status-${response.status}">${response.status}</span></h3>
+                        <p><strong>URL:</strong> ${url}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                document.getElementById('apiResults').innerHTML += html;
+            } catch (error) {
+                document.getElementById('apiResults').innerHTML += `
+                    <div class="section error">
+                        <h3>❌ Attendance API Error</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testDebarmentAPI() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+            
+            if (!user._id || !token) {
+                alert('Please login first!');
+                return;
+            }
+
+            const url = `${API_BASE}/academic/debarment/${user._id}`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                const html = `
+                    <div class="section ${response.ok ? 'success' : 'error'}">
+                        <h3>Debarment API <span class="status status-${response.status}">${response.status}</span></h3>
+                        <p><strong>URL:</strong> ${url}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                document.getElementById('apiResults').innerHTML += html;
+            } catch (error) {
+                document.getElementById('apiResults').innerHTML += `
+                    <div class="section error">
+                        <h3>❌ Debarment API Error</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAllAPIs() {
+            document.getElementById('apiResults').innerHTML = '<p>Testing all APIs...</p>';
+            await testMarksAPI();
+            await testAttendanceAPI();
+            await testDebarmentAPI();
+        }
+
+        async function checkDatabase() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!user._id) {
+                alert('Please login first!');
+                return;
+            }
+
+            document.getElementById('dbResults').innerHTML = `
+                <div class="section">
+                    <h3>📊 Database Check Instructions</h3>
+                    <p>Run this command in your backend terminal:</p>
+                    <pre>node debug-academic-data.js</pre>
+                    <p>Look for records with Student ID: <strong>${user._id}</strong></p>
+                </div>
+            `;
+        }
+
+        // Auto-check login on page load
+        window.onload = () => {
+            checkLogin();
+        };
+    </script>
+</body>
+</html>

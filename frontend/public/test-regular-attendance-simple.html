@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Regular Attendance - Simple</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { margin: 5px; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; max-height: 400px; }
+        .step { margin: 20px 0; padding: 15px; border-left: 4px solid #007bff; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Regular Attendance API Test</h1>
+    
+    <div class="step">
+        <h3>Step 1: Login</h3>
+        <button onclick="testLogin()">Login as CS Student</button>
+        <div id="login-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Test Department Attendance</h3>
+        <button onclick="testDepartmentAttendance()" id="dept-btn" disabled>Get Department Attendance</button>
+        <div id="dept-result"></div>
+    </div>
+
+    <div class="step">
+        <h3>Step 3: Test All Students Attendance</h3>
+        <button onclick="testAllStudents()" id="all-btn" disabled>Get All Students (Should Fail)</button>
+        <div id="all-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5001/api';
+        let authToken = null;
+        let currentUser = null;
+
+        function addResult(containerId, title, success, data) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `result ${success ? 'success' : 'error'}`;
+            div.innerHTML = `
+                <h4>${title}</h4>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            container.innerHTML = '';
+            container.appendChild(div);
+        }
+
+        async function testLogin() {
+            try {
+                console.log('🔐 Attempting login...');
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'cs.student1@college.edu',
+                        password: 'password123'
+                    })
+                });
+
+                const data = await response.json();
+                console.log('🔐 Login response:', data);
+                
+                if (response.ok && data.success) {
+                    authToken = data.data.token;
+                    currentUser = data.data.user;
+                    
+                    // Enable other buttons
+                    document.getElementById('dept-btn').disabled = false;
+                    document.getElementById('all-btn').disabled = false;
+                    
+                    addResult('login-result', '✅ Login Successful', true, {
+                        message: 'Login successful',
+                        user: {
+                            name: currentUser.name,
+                            email: currentUser.email,
+                            department: currentUser.department,
+                            academicYear: currentUser.academicYear,
+                            role: currentUser.role
+                        },
+                        tokenLength: authToken.length
+                    });
+                } else {
+                    addResult('login-result', '❌ Login Failed', false, data);
+                }
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                addResult('login-result', '❌ Login Error', false, { 
+                    error: error.message,
+                    stack: error.stack 
+                });
+            }
+        }
+
+        async function testDepartmentAttendance() {
+            if (!authToken || !currentUser) {
+                addResult('dept-result', '❌ No Auth Token', false, { error: 'Please login first' });
+                return;
+            }
+
+            try {
+                console.log('📊 Testing department attendance...');
+                console.log('📊 User info:', currentUser);
+                
+                const url = `${API_BASE}/academic/department/attendance?department=${currentUser.department}&academicYear=${currentUser.academicYear}&semester=current`;
+                console.log('📊 API URL:', url);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('📊 Response status:', response.status);
+                console.log('📊 Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                const data = await response.json();
+                console.log('📊 Response data:', data);
+                
+                if (response.ok && data.success) {
+                    const students = data.data.students || [];
+                    const studentsWithAttendance = students.filter(s => s.attendance && s.attendance.length > 0);
+                    
+                    addResult('dept-result', '✅ Department Attendance Success', true, {
+                        message: 'API call successful',
+                        department: data.data.department,
+                        academicYear: data.data.academicYear,
+                        totalStudents: students.length,
+                        studentsWithAttendance: studentsWithAttendance.length,
+                        sampleStudent: students[0] ? {
+                            name: students[0].name,
+                            department: students[0].department,
+                            attendanceRecords: students[0].attendance?.length || 0,
+                            sampleAttendance: students[0].attendance?.[0] || null
+                        } : null,
+                        allStudents: students.map(s => ({
+                            name: s.name,
+                            department: s.department,
+                            attendanceCount: s.attendance?.length || 0
+                        }))
+                    });
+                } else {
+                    addResult('dept-result', '❌ Department Attendance Failed', false, {
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: data
+                    });
+                }
+            } catch (error) {
+                console.error('❌ Department attendance error:', error);
+                addResult('dept-result', '❌ Department Attendance Error', false, { 
+                    error: error.message,
+                    stack: error.stack 
+                });
+            }
+        }
+
+        async function testAllStudents() {
+            if (!authToken) {
+                addResult('all-result', '❌ No Auth Token', false, { error: 'Please login first' });
+                return;
+            }
+
+            try {
+                console.log('🌐 Testing all students attendance (should fail for student)...');
+                
+                const response = await fetch(`${API_BASE}/academic/all-students/attendance?academicYear=1&semester=current`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                console.log('🌐 All students response:', data);
+                
+                if (response.ok && data.success) {
+                    addResult('all-result', '⚠️ All Students Success (Unexpected)', true, {
+                        message: 'API call successful (this should not happen for students)',
+                        studentsCount: data.data?.students?.length || 0
+                    });
+                } else {
+                    addResult('all-result', '✅ All Students Failed (Expected)', true, {
+                        message: 'API correctly denied access for student role',
+                        status: response.status,
+                        error: data.error?.message || 'Access denied'
+                    });
+                }
+            } catch (error) {
+                console.error('❌ All students error:', error);
+                addResult('all-result', '❌ All Students Error', false, { 
+                    error: error.message 
+                });
+            }
+        }
+
+        // Auto-run login on page load for quick testing
+        window.addEventListener('load', () => {
+            console.log('🚀 Page loaded, ready for testing');
+        });
+    </script>
+</body>
+</html>

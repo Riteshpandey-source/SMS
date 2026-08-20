@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .test-credentials {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .test-credentials h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .credential-item {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Frontend Login Test</h1>
+        
+        <div class="test-credentials">
+            <h3>Test Credentials (All passwords: password123)</h3>
+            <div class="credential-item">👨‍🏫 Faculty: it.faculty@college.edu</div>
+            <div class="credential-item">👨‍🎓 IT Student: it.student1@college.edu</div>
+            <div class="credential-item">👨‍🎓 CS Student: cs.student1@college.edu</div>
+        </div>
+
+        <div class="form-group">
+            <label for="testUser">Quick Select:</label>
+            <select id="testUser" onchange="fillCredentials()">
+                <option value="">-- Select Test User --</option>
+                <option value="it.faculty@college.edu">IT Faculty (Prof. Rajesh IT)</option>
+                <option value="it.student1@college.edu">IT Student (Rahul Sharma)</option>
+                <option value="cs.student1@college.edu">CS Student (Amit Sharma)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" placeholder="Enter email">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="password123" placeholder="Enter password">
+        </div>
+
+        <button onclick="testLogin()" id="loginBtn">🔐 Test Login</button>
+        <button onclick="checkBackend()" id="backendBtn">🔍 Check Backend</button>
+        <button onclick="checkLocalStorage()" id="storageBtn">💾 Check Storage</button>
+        <button onclick="clearStorage()" id="clearBtn">🗑️ Clear Storage</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000/api';
+
+        function fillCredentials() {
+            const select = document.getElementById('testUser');
+            const email = document.getElementById('email');
+            const password = document.getElementById('password');
+            
+            email.value = select.value;
+            password.value = 'password123';
+        }
+
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+        }
+
+        async function checkBackend() {
+            showResult('Checking backend connection...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/status`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult(`✅ Backend is running!\n\nResponse:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`⚠️ Backend responded with status: ${response.status}\n\n${await response.text()}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ Cannot connect to backend!\n\nError: ${error.message}\n\nMake sure backend is running on port 5000`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showResult('❌ Please enter email and password', 'error');
+                return;
+            }
+
+            showResult('Testing login...', 'info');
+            document.getElementById('loginBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store tokens
+                    localStorage.setItem('accessToken', data.data.session.accessToken);
+                    localStorage.setItem('refreshToken', data.data.session.refreshToken);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+
+                    showResult(
+                        `✅ LOGIN SUCCESSFUL!\n\n` +
+                        `User Details:\n` +
+                        `Name: ${data.data.user.name}\n` +
+                        `Email: ${data.data.user.email}\n` +
+                        `Role: ${data.data.user.role}\n` +
+                        `Department: ${data.data.user.department}\n` +
+                        `Year: ${data.data.user.academicYear || 'N/A'}\n\n` +
+                        `Session:\n` +
+                        `Access Token: ${data.data.session.accessToken.substring(0, 50)}...\n` +
+                        `Refresh Token: ${data.data.session.refreshToken.substring(0, 50)}...\n\n` +
+                        `✅ Tokens saved to localStorage!`,
+                        'success'
+                    );
+                } else {
+                    showResult(
+                        `❌ LOGIN FAILED!\n\n` +
+                        `Status: ${response.status}\n` +
+                        `Error: ${data.error?.message || 'Unknown error'}\n\n` +
+                        `Full Response:\n${JSON.stringify(data, null, 2)}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult(
+                    `❌ REQUEST FAILED!\n\n` +
+                    `Error: ${error.message}\n\n` +
+                    `Possible causes:\n` +
+                    `1. Backend not running (check port 5000)\n` +
+                    `2. CORS issue\n` +
+                    `3. Network error`,
+                    'error'
+                );
+            } finally {
+                document.getElementById('loginBtn').disabled = false;
+            }
+        }
+
+        function checkLocalStorage() {
+            const accessToken = localStorage.getItem('accessToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            const user = localStorage.getItem('user');
+
+            if (!accessToken && !refreshToken && !user) {
+                showResult('📭 LocalStorage is empty\n\nNo tokens or user data found.', 'info');
+                return;
+            }
+
+            let message = '💾 LocalStorage Contents:\n\n';
+
+            if (accessToken) {
+                message += `Access Token: ${accessToken.substring(0, 50)}...\n\n`;
+            } else {
+                message += 'Access Token: Not found\n\n';
+            }
+
+            if (refreshToken) {
+                message += `Refresh Token: ${refreshToken.substring(0, 50)}...\n\n`;
+            } else {
+                message += 'Refresh Token: Not found\n\n';
+            }
+
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    message += `User Data:\n${JSON.stringify(userData, null, 2)}`;
+                } catch (e) {
+                    message += `User Data: Invalid JSON\n${user}`;
+                }
+            } else {
+                message += 'User Data: Not found';
+            }
+
+            showResult(message, 'success');
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            showResult('✅ LocalStorage cleared!\n\nAll tokens and user data removed.', 'success');
+        }
+
+        // Check backend on load
+        window.onload = () => {
+            checkBackend();
+        };
+    </script>
+</body>
+</html>
