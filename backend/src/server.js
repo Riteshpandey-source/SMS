@@ -31,6 +31,7 @@ const corsOptions = {
       'https://sms-git-master-riteshchandrapandey1008-8751s-projects.vercel.app',
       'https://sms-65vte72pe-riteshchandrapandey1008-8751s-projects.vercel.app',
       'https://campusbuddy-edu.vercel.app',
+      'https://sms-81enzkn5r5-riteshchandrapandey1008-8751s-projects.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean);
 
