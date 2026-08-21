@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors');
+// cors removed
 const helmet = require('helmet');
 const morgan = require('morgan');
 
@@ -9,12 +9,7 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 
 app.use(helmet());
-app.use(
-  cors({
-    origin: config.corsOrigin === '*' ? true : config.corsOrigin.split(',').map((origin) => origin.trim()),
-    credentials: true
-  })
-);
+// CORS removed to avoid duplication with server.js
 app.use(morgan('dev'));
 app.use(express.json());
 
