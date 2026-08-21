@@ -110,7 +110,8 @@ const UnifiedUserDepartmentManagement = () => {
   const [quickAdminForm, setQuickAdminForm] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    department: adminDepartment || 'Administration'
   });
   const [creatingAdmin, setCreatingAdmin] = useState(false);
 
@@ -321,11 +322,11 @@ const UnifiedUserDepartmentManagement = () => {
         email: quickAdminForm.email.trim(),
         password: quickAdminForm.password,
         role: 'admin',
-        department: adminDepartment || user?.department || 'IT',
+        department: adminDepartment || quickAdminForm.department || 'Administration',
         isActive: true
       });
       toast.success('Department admin created');
-      setQuickAdminForm({ name: '', email: '', password: '' });
+      setQuickAdminForm({ name: '', email: '', password: '', department: adminDepartment || 'Administration' });
       await fetchUsers();
     } catch (error) {
       console.error('Failed to create admin', error);
@@ -636,9 +637,15 @@ const UnifiedUserDepartmentManagement = () => {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-base font-bold text-blue-900">Quick Department Admin Setup</p>
-                <p className="text-xs text-blue-700 mt-0.5">Create an administrative account scoped to: <span className="font-bold underline">{adminDepartment || user?.department || 'IT'}</span></p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  {adminDepartment ? (
+                    <>Create an administrative account scoped to: <span className="font-bold underline">{adminDepartment}</span></>
+                  ) : (
+                    "Create a department-scoped administrative account."
+                  )}
+                </p>
               </div>
-              <form onSubmit={handleQuickAdminCreate} className="grid grid-cols-1 gap-3 sm:grid-cols-4 items-end w-full lg:w-auto">
+              <form onSubmit={handleQuickAdminCreate} className="grid grid-cols-1 gap-3 sm:grid-cols-5 items-end w-full lg:w-auto">
                 <input
                   type="text"
                   placeholder="Full Name"
@@ -663,10 +670,21 @@ const UnifiedUserDepartmentManagement = () => {
                   className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
                   required
                 />
+                <select
+                  value={quickAdminForm.department}
+                  onChange={(e) => setQuickAdminForm((c) => ({ ...c, department: e.target.value }))}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200 disabled:opacity-70 disabled:bg-slate-50"
+                  disabled={!!adminDepartment}
+                  required
+                >
+                  {visibleDepartments.map((dept) => (
+                    <option key={dept.value} value={dept.value}>{dept.label}</option>
+                  ))}
+                </select>
                 <button
                   type="submit"
                   disabled={creatingAdmin}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-all duration-200 shadow-sm"
+                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-all duration-200 disabled:opacity-70 active:scale-95 whitespace-nowrap"
                 >
                   {creatingAdmin ? 'Creating...' : 'Create Admin'}
                 </button>
@@ -856,7 +874,7 @@ const UnifiedUserDepartmentManagement = () => {
                   <option value="faculty">Faculty</option>
                   <option value="admin">Admin</option>
                 </select>
-                <select value={formData.department} onChange={(e) => { setCreatedCredentials(null); setFormData((current) => ({ ...current, department: e.target.value })); }} className="rounded-lg border px-3 py-2" disabled={formData.role === 'admin'}>
+                <select value={formData.department} onChange={(e) => { setCreatedCredentials(null); setFormData((current) => ({ ...current, department: e.target.value })); }} className="rounded-lg border px-3 py-2" disabled={!!adminDepartment}>
                   {visibleDepartments.map((department) => (
                     <option key={department.value} value={department.value}>{department.label}</option>
                   ))}
