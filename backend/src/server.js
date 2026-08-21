@@ -22,19 +22,13 @@ app.use(helmet());
 
 const corsOptions = {
   origin(origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:5174',
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://sms-rose-one.vercel.app',
-      'https://sms-g6n9lbuhd-riteshchandrapandey1008-8751s-projects.vercel.app',
-      'https://sms-git-master-riteshchandrapandey1008-8751s-projects.vercel.app',
-      'https://sms-65vte72pe-riteshchandrapandey1008-8751s-projects.vercel.app',
-      'https://campusbuddy-edu.vercel.app',
-      'https://sms-81enzkn5r5-riteshchandrapandey1008-8751s-projects.vercel.app',
-      'https://sms-81enzkn5r-riteshchandrapandey1008-8751s-projects.vercel.app',
-      process.env.FRONTEND_URL
-    ].filter(Boolean);
+   const allowedOrigins = [
+  'http://localhost:5174',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://campusbuddy-edu.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
