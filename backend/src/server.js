@@ -27,6 +27,7 @@ const corsOptions = {
       'http://localhost:5173',
       'http://localhost:3000',
       'https://sms-rose-one.vercel.app',
+      'https://sms-g6n9lbuhd-riteshchandrapandey1008-8751s-projects.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean);
 
