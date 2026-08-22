@@ -25,6 +25,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useYear } from '../../contexts/YearContext';
 import { facultyService } from '../../services/facultyService';
 import academicService from '../../services/academicService';
+import examMarksService from '../../services/examMarksService';
 import toast from 'react-hot-toast';
 import StudentExamMarksView from '../Student/StudentExamMarksView';
 
@@ -169,7 +170,7 @@ const Academic = ({ initialSection = 'overview', onNavigate }) => {
       // Fetch marks, attendance, and debarments
       // Don't pass academicYear to get latest record by default
       const [marksRes, attendanceRes, debarmentRes] = await Promise.allSettled([
-        academicService.getMidTermMarks(userId, null, null), // null = fetch latest
+        examMarksService.getStudentMarks(userId), // Fetch from examMarks collection
         academicService.getAttendance(userId, null, null), // null = fetch latest
         academicService.getStudentDebarments(userId)
       ]);
@@ -178,10 +179,12 @@ const Academic = ({ initialSection = 'overview', onNavigate }) => {
       console.log('📚 Attendance response:', attendanceRes);
       console.log('📚 Debarment response:', debarmentRes);
       
-      // Process marks - backend returns midTermMarks field
-      const marks = marksRes.status === 'fulfilled' && marksRes.value?.data 
-        ? (marksRes.value.data.midTermMarks || marksRes.value.data.marks || [])
-        : [];
+      // Process marks
+      let marks = [];
+      if (marksRes.status === 'fulfilled') {
+        const marksData = marksRes.value?.data || {};
+        marks = marksData.data || marksData.midTermMarks || marksData.marks || [];
+      }
       
       // Process attendance
       const attendance = attendanceRes.status === 'fulfilled' && attendanceRes.value?.data?.attendance

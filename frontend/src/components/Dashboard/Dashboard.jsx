@@ -14,6 +14,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAssignment } from '../../contexts/AssignmentContext';
 import { userService } from '../../services/userService';
 import academicService from '../../services/academicService';
+import examMarksService from '../../services/examMarksService';
 import ManagePersonalTrackerModal from './ManagePersonalTrackerModal';
 
 const Dashboard = ({ initialSection = 'overview', onNavigate }) => {
@@ -309,7 +310,7 @@ const Dashboard = ({ initialSection = 'overview', onNavigate }) => {
 
       // Fetch all academic data in parallel with timeout
       const [marksResponse, attendanceResponse, debarmentResponse] = await Promise.allSettled([
-        Promise.race([academicService.getMidTermMarks(studentId, academicYear, 'current'), timeoutPromise]),
+        Promise.race([examMarksService.getStudentMarks(studentId), timeoutPromise]),
         Promise.race([academicService.getAttendance(studentId, academicYear, 'current'), timeoutPromise]),
         Promise.race([academicService.getStudentDebarments(studentId), timeoutPromise])
       ]);
@@ -326,8 +327,8 @@ const Dashboard = ({ initialSection = 'overview', onNavigate }) => {
       if (marksResponse.status === 'fulfilled' && marksResponse.value?.data) {
         const marks = marksResponse.value.data;
         console.log('🎓 Processing marks data:', marks);
-        // Backend returns midTermMarks field
-        const midTermMarks = marks.midTermMarks || marks.marks || [];
+        // Backend returns data field for examMarks
+        const midTermMarks = marks.data || marks.midTermMarks || marks.marks || [];
         if (Array.isArray(midTermMarks) && midTermMarks.length > 0) {
           // Validate and clean marks data
           marksData.subjects = midTermMarks.filter(mark => 

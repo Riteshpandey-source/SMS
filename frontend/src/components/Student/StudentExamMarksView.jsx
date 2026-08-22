@@ -23,7 +23,7 @@ const StudentExamMarksView = () => {
     setLoading(true);
     try {
       const res = await examMarksService.getStudentMarks(user._id);
-      setMarks(res.data || []);
+      setMarks(res.data?.data || res.data || []);
     } catch (error) {
       console.error('Failed to load exam marks', error);
       toast.error(error.response?.data?.error?.message || 'Failed to load marks');

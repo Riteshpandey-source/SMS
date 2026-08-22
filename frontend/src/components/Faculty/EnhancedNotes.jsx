@@ -207,7 +207,7 @@ const EnhancedNotes = () => {
       const filteredNotes = uploadedNotes.filter(n => n._id !== noteId);
       localStorage.setItem('uploadedNotes', JSON.stringify(filteredNotes));
       
-      // In real app: await notesService.deleteNote(noteId);
+      await notesService.deleteNote(noteId);
       
       // Refresh the notes list
       fetchNotes();
